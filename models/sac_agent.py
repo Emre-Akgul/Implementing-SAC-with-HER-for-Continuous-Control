@@ -15,24 +15,31 @@ from buffers.her_replay_buffer import HERReplayBuffer
 
 class SAC:
     def __init__(self, state_dim, action_dim, device="cpu"):
+        # set hyperparameters
         self.device = device
         self.gamma = 0.98
         self.tau = 0.005
         self.alpha = 0.2
-        
+
+        # initialize actor 
         self.policy = PolicyNetwork(state_dim, action_dim).to(device)
+
+        # initialize critics - we will use double Q network clipping trick
         self.q1 = QNetwork(state_dim, action_dim).to(device)
         self.q2 = QNetwork(state_dim, action_dim).to(device)
         self.q1_target = QNetwork(state_dim, action_dim).to(device)
         self.q2_target = QNetwork(state_dim, action_dim).to(device)
         
+        # copy weights to target networks
         self.q1_target.load_state_dict(self.q1.state_dict())
         self.q2_target.load_state_dict(self.q2.state_dict())
-        
+
+        # adam optimizers lr=3e-4
         self.policy_optimizer = optim.Adam(self.policy.parameters(), lr=3e-4)
         self.q1_optimizer = optim.Adam(self.q1.parameters(), lr=3e-4)
         self.q2_optimizer = optim.Adam(self.q2.parameters(), lr=3e-4)
         
+        # entropy target
         self.target_entropy = -action_dim
         self.log_alpha = torch.zeros(1, requires_grad=True, device=device)
         self.alpha_optimizer = optim.Adam([self.log_alpha], lr=3e-4)
@@ -64,6 +71,7 @@ class SAC:
             next_action, next_log_prob = self.policy.sample(next_state_batch)
             next_q1 = self.q1_target(next_state_batch, next_action)
             next_q2 = self.q2_target(next_state_batch, next_action)
+            # Q network clipping trick
             next_q = torch.min(next_q1, next_q2) - self.alpha * next_log_prob
             target_q = reward_batch + (1 - done_batch) * self.gamma * next_q
         

@@ -3,27 +3,11 @@ import random
 from collections import deque
 
 class HERReplayBuffer:
-    """
-    Hindsight Experience Replay (HER) Replay Buffer.
-
-    Stores experiences for off-policy reinforcement learning algorithms
-    and applies the HER strategy to augment the data.
-
-    Args:
-        capacity (int): Maximum number of experiences to store.
-        k_future (int): Number of future states to use for HER augmentation.
-    """
     def __init__(self, capacity=1000000, k_future=4):
         self.buffer = deque(maxlen=capacity)
         self.k_future = k_future
     
     def store_trajectory(self, trajectory):
-        """
-        Store a trajectory and apply the HER strategy to augment the data.
-
-        Args:
-            trajectory (list): List of transitions (state, action, reward, next_state, done).
-        """
         # Store original trajectory
         for t in range(len(trajectory)):
             self.buffer.append(trajectory[t])
@@ -48,46 +32,34 @@ class HERReplayBuffer:
                 state['desired_goal'] = future_ag
                 next_state['desired_goal'] = future_ag
                 
-                # Calculate new reward based on future goal
+                # Calculate reward
                 reward = 0.0 if np.linalg.norm(next_state['achieved_goal'] - future_ag) < 0.05 else -1.0
                 
                 self.buffer.append((state, trajectory[t][1], reward, next_state, trajectory[t][4]))
     
     def sample(self, batch_size):
-        """
-        Sample a batch of experiences.
-
-        Args:
-            batch_size (int): Number of experiences to sample.
-
-        Returns:
-            tuple: Batch of (state, action, reward, next_state, done).
-        """
         if len(self.buffer) < batch_size:
             return None
         
         batch = random.sample(self.buffer, batch_size)
         state_batch, action_batch, reward_batch, next_state_batch, done_batch = zip(*batch)
         
-        # Convert states to network input format
-        def process_states(states):
-            observations = np.array([s['observation'] for s in states])
-            goals = np.array([s['desired_goal'] for s in states])
-            return np.concatenate([observations, goals], axis=1)
+
+        cur_observations = np.array([s['observation'] for s in state_batch])
+        cur_goals = np.array([s['desired_goal'] for s in state_batch])
+        cur_state = np.concatenate([cur_observations, cur_goals], axis=1)
         
+
+        next_observations = np.array([s['observation'] for s in next_state_batch])
+        next_goals = np.array([s['desired_goal'] for s in next_state_batch])
+        next_state = np.concatenate([next_observations, next_goals], axis=1)
         return (
-            process_states(state_batch),
+            cur_state,
             np.array(action_batch),
             np.array(reward_batch),
-            process_states(next_state_batch),
+            next_state,
             np.array(done_batch)
         )
     
     def __len__(self):
-        """
-        Get the current size of the replay buffer.
-
-        Returns:
-            int: Number of stored experiences.
-        """
         return len(self.buffer)
