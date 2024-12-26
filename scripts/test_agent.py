@@ -21,7 +21,7 @@ def main():
     # Device setup
     # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     device = "cpu"
-    model_path = "checkpoints/sac_her_fetchreach.pth"
+    model_path = "checkpoints/sac_her_fetchreach_1000.pth"
 
     # Initialize the SAC agent
     sac = SAC(state_dim, action_dim, device=device)
