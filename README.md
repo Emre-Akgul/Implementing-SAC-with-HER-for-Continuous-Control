@@ -2,6 +2,13 @@
 
 This project implements a combination of Soft Actor-Critic (SAC) and Hindsight Experience Replay (HER) for robotic manipulation in the FetchReach environment. The implementation focuses on sample-efficient learning in sparse reward settings.
 
+## Video Demo
+
+### Watch the Training Process in Action!
+[![SAC-HER FetchReach Demo](https://img.youtube.com/vi/pxpdP-3F_zA/0.jpg)](https://youtu.be/pxpdP-3F_zA?si=DHxuSBMeCE9bt-gq)
+
+Click the image above or [here](https://youtu.be/pxpdP-3F_zA?si=DHxuSBMeCE9bt-gq) to view the demo.
+
 ## Overview
 
 ### Soft Actor-Critic (SAC)
